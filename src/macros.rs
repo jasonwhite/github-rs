@@ -123,12 +123,11 @@ macro_rules! from {
             fn from(gh: &'g Github) -> Self {
                 use std::result;
                 use hyper::mime::FromStrError;
-                let url = "https://api.github.com".parse::<Uri>();
                 let mime: result::Result<Mime, FromStrError> =
                     "application/vnd.github.v3+json".parse();
-                match (url, mime) {
-                    (Ok(u), Ok(m)) => {
-                        let mut req = Request::new($p, u);
+                match mime {
+                    Ok(m) => {
+                        let mut req = Request::new($p, gh.base_url.clone());
                         let token = String::from("token ") + &gh.token;
                         {
                             let headers = req.headers_mut();
@@ -144,26 +143,10 @@ macro_rules! from {
                             parameter: None,
                         }
                     }
-                    (Err(u), Ok(_)) => {
+                    Err(e) => {
                         Self {
-                            request: Err(u.into()),
-                            core: &gh.core,
-                            client: &gh.client,
-                            parameter: None,
-                        }
-                    }
-                    (Ok(_), Err(e)) => {
-                        Self {
-                            request: Err(e.into()),
-                            core: &gh.core,
-                            client: &gh.client,
-                            parameter: None,
-                        }
-                    }
-                    (Err(u), Err(e)) => {
-                        Self {
-                            request: Err(u).chain_err(||
-                                format!("Mime failed to parse: {:?}", e)
+                            request: Err(e).chain_err(||
+                                "Mime failed to parse"
                             ),
                             core: &gh.core,
                             client: &gh.client,

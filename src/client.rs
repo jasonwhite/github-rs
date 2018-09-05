@@ -40,6 +40,7 @@ pub struct Github {
     token: String,
     core: Rc<RefCell<Core>>,
     client: Rc<Client<HttpsConnector>>,
+    base_url: Uri,
 }
 
 impl Clone for Github {
@@ -48,6 +49,7 @@ impl Clone for Github {
             token: self.token.clone(),
             core: Rc::clone(&self.core),
             client: Rc::clone(&self.client),
+            base_url: self.base_url.clone(),
         }
     }
 }
@@ -97,7 +99,13 @@ impl Github {
             token: token.to_string(),
             core: Rc::new(RefCell::new(core)),
             client: Rc::new(client),
+            base_url: "https://api.github.com".parse::<Uri>().unwrap(),
         })
+    }
+
+    pub fn with_base_url(&mut self, base_url: Uri) -> &mut Self {
+        self.base_url = base_url;
+        self
     }
 
     /// Get the currently set Authorization Token
